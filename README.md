@@ -6,7 +6,7 @@
 
 - **Server**: Asyncio-based TCP server, in-memory lock management, auto-timeout for stale locks (default: 10s), minimal resource usage.
 - **Client**: Synchronous Python client, context manager support, unique client IDs, retry and timeout mechanisms.
-- **Protocol**: Simple binary line protocol (`LOCK`, `RELEASE`, `HEALTH`), no external dependencies, easy to implement in any language.
+- **Protocol**: Fast custom binary protocol inspired by RESP (used in Redis). This protocol minimizes parsing overhead and enables sub-millisecond lock operations, making it ideal for high-throughput, low-latency distributed coordination.
 - **Design Philosophy**: Minimalism, reliability, and maintainability. No persistence, no external databases, no complex configuration.
 
 ## Features
@@ -43,7 +43,7 @@ pip install distlockd
 ### Starting the Server
 
 ```bash
-# Basic usage (default host: 0.0.0.0, port: 8888)
+# Basic usage (default host: 127.0.0.1, port: 8888)
 python -m distlockd server
 
 # With custom host and port
@@ -68,7 +68,7 @@ logging.basicConfig(
 )
 
 # Create a client
-client = Client(host='localhost', port=8888)
+client = Client() # default host: 127.0.0.1, port: 8888, specified host and port: Client(host="192.xx.xx.xx", port=9999)
 
 # Check server health
 if client.check_server_health():
