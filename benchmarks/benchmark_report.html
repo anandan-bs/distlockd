@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>distlockd Performance Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; margin-top: 30px; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th { background-color: #f8f9fa; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .metric {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .metric h3 { margin-top: 0; color: #2c3e50; }
+        .error { color: #e74c3c; }
+        .success { color: #27ae60; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>distlockd Performance Report</h1>
+        <p>Generated on: 2025-05-27 15:46:11</p>
+        
+            <h2>Latency Test Results</h2>
+            <div class="metric">
+                <h3>Lock Operation Latency (milliseconds)</h3>
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value (ms)</th>
+                    </tr>
+                    <tr><td>Minimum</td><td>0.00</td></tr>
+                    <tr><td>Maximum</td><td>6.00</td></tr>
+                    <tr><td>Average</td><td>0.41</td></tr>
+                    <tr><td>95th Percentile</td><td>1.01</td></tr>
+                    <tr><td>99th Percentile</td><td>1.14</td></tr>
+                </table>
+            </div>
+        
+
+            <h2>Throughput Test Results</h2>
+            <div class="metric">
+                <h3>Operations Per Second</h3>
+                <p>Average: <strong>971.00 ops/sec</strong></p>
+            </div>
+        
+
+            <h2>Concurrency Test Results</h2>
+            <div class="metric">
+                <h3>Multiple Client Success Rate</h3>
+                <p>Success Rate: <strong>100.00%</strong></p>
+            </div>
+        
+    </div>
+</body>
+</html>
