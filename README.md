@@ -139,9 +139,32 @@ Performance tests compare `distlockd` against Redis-based distributed locks unde
 - For most use cases, lock acquisition and release are sub-millisecond.
 - Throughput scales well with moderate concurrency, making it suitable for most coordination tasks.
 
-See the full interactive benchmark report for details and graphs:
+See the full interactive benchmark report by opening the following file in your web browser after running the benchmarks:
 
-[📊 Benchmark Report (HTML)](benchmarks/benchmark_report.html)
+`benchmarks/benchmark_report.html`
+
+> **Note:**
+> GitHub does not render local HTML files. To view the interactive report, clone the repository and open the file above in your browser. Here is the report:
+
+### 📈 Benchmark Highlights
+
+| Test Type      | Metric                 | Result         |
+|----------------|------------------------|---------------|
+| **Latency**    | Minimum                | **0.00 ms**   |
+|                | Maximum                | **6.00 ms**   |
+|                | Average                | **0.41 ms**   |
+|                | 95th Percentile        | **1.01 ms**   |
+|                | 99th Percentile        | **1.14 ms**   |
+| **Throughput** | Average Ops/sec        | **971**       |
+| **Concurrency**| Clients                | **100**       |
+|                | Locks                  | **10**        |
+|                | Success Rate           | **100%**      |
+
+> **Summary:**
+> - Lock operations are consistently fast, with average latency well below 1 ms.
+> - The server handles nearly 1,000 lock/unlock operations per second.
+> - In a high-concurrency scenario (100 clients, 10 locks), all operations succeeded.
+
 
 ## License
 
