@@ -10,7 +10,7 @@ import time
 import logging
 import threading
 import statistics
-import argparse
+
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
@@ -21,12 +21,25 @@ except ImportError:
     redis = None
 
 try:
-    from distlockd.client import Client as DistlockdClient
+    from .client import Client as DistlockdClient
 except ImportError:
     DistlockdClient = None
 
 class BenchmarkRunner:
     def __init__(self, backend, host, port, iterations=1000, num_clients=100, num_locks=10, throughput_seconds=10, verbose=False):
+        """
+        Initialize the benchmark runner.
+
+        Args:
+            backend (str): The backend to use (distlockd or redis).
+            host (str): The hostname or IP address of the server.
+            port (int): The port number to use.
+            iterations (int): The number of iterations to run.
+            num_clients (int): The number of clients to run.
+            num_locks (int): The number of locks to test.
+            throughput_seconds (int): The number of seconds to run the throughput test.
+            verbose (bool): Whether to print verbose logging.
+        """
         self.backend = backend
         self.host = host
         self.port = port
@@ -56,6 +69,9 @@ class BenchmarkRunner:
             sys.exit(1)
 
     def _get_client(self):
+        """
+        Get a client object for the specified backend.
+        """
         if self.backend == 'redis':
             client = redis.Redis(host=self.host, port=self.port)
             if not client.ping():
@@ -71,6 +87,9 @@ class BenchmarkRunner:
             sys.exit(1)
 
     def measure_latency(self):
+        """
+        Measure the latency of the specified backend.
+        """
         latencies = []
         for i in range(self.iterations):
             lock_name = f"test-lock-{i}"
@@ -106,6 +125,9 @@ class BenchmarkRunner:
         }
 
     def measure_throughput(self):
+        """
+        Measure the throughput of the specified backend.
+        """
         stop_event = threading.Event()
         ops_queue = Queue()
         def worker():
@@ -147,6 +169,9 @@ class BenchmarkRunner:
         return total_ops / self.throughput_seconds
 
     def test_concurrent_clients(self):
+        """
+        Test the concurrency of the specified backend.
+        """
         def client_worker(args):
             _, lock_name = args
             try:
@@ -176,6 +201,9 @@ class BenchmarkRunner:
         return success_rate
 
     def run_all(self):
+        """
+        Run all of the benchmarks.
+        """
         print(f"Running {self.backend} benchmark on {self.host}:{self.port}")
         latency = self.measure_latency()
         print("Latency test completed")
@@ -183,52 +211,29 @@ class BenchmarkRunner:
         print("Throughput test completed")
         concurrency = self.test_concurrent_clients()
         print("Concurrency test completed")
-        return {
+        results = {
             'latency': latency,
             'throughput': throughput,
             'concurrency': concurrency
         }
+        self.print_results(results)
 
-def print_results(results, backend):
-    print(f"\n# {backend.capitalize()} Benchmark Results\n")
-    print("| Metric | Value |")
-    print("|--------|-------|")
-    latency = results['latency']
-    print(f"| Latency Min (ms) | {latency['min']:.2f} |")
-    print(f"| Latency Max (ms) | {latency['max']:.2f} |")
-    print(f"| Latency Avg (ms) | {latency['avg']:.2f} |")
-    print(f"| 95th Percentile (ms) | {latency['p95']:.2f} |")
-    print(f"| 99th Percentile (ms) | {latency['p99']:.2f} |")
-    print(f"| Throughput (ops/sec) | {results['throughput']:.2f} |")
-    print(f"| Concurrency Success Rate (%) | {results['concurrency']:.2f} |")
+    def print_results(self, results):
+        print(f"\n# {self.backend.capitalize()} Benchmark Results\n")
+        print("\n# Test Parameters\n")
+        print(f"Iterations: {self.iterations}")
+        print(f"Number of clients: {self.num_clients}")
+        print(f"Number of locks: {self.num_locks}")
+        print(f"Throughput seconds: {self.throughput_seconds}")
+        print("\n# Results\n")
 
-def main():
-    parser = argparse.ArgumentParser(description="Unified distlockd/Redis benchmark runner")
-    parser.add_argument('backend', choices=['redis', 'distlockd'], help='Which backend to test')
-    parser.add_argument('--host', type=str, help='Host to connect to')
-    parser.add_argument('--port', type=int, help='Port to connect to')
-    parser.add_argument('--iterations', type=int, default=1000, help='Number of iterations for latency test')
-    parser.add_argument('--num-clients', type=int, default=100, help='Number of clients for concurrency test')
-    parser.add_argument('--num-locks', type=int, default=10, help='Number of locks for concurrency test')
-    parser.add_argument('--throughput-seconds', type=int, default=10, help='Seconds for throughput test')
-    parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
-    args = parser.parse_args()
-
-    host = args.host or "localhost"
-    port = args.port or 6379 if args.backend == 'redis' else 9999
-
-    runner = BenchmarkRunner(
-        args.backend,
-        host,
-        port,
-        iterations=args.iterations,
-        num_clients=args.num_clients,
-        num_locks=args.num_locks,
-        throughput_seconds=args.throughput_seconds,
-        verbose=args.verbose
-    )
-    results = runner.run_all()
-    print_results(results, args.backend)
-
-if __name__ == '__main__':
-    main()
+        print("| Metric | Value |")
+        print("|--------|-------|")
+        latency = results['latency']
+        print(f"| Latency Min (ms) | {latency['min']:.2f} |")
+        print(f"| Latency Max (ms) | {latency['max']:.2f} |")
+        print(f"| Latency Avg (ms) | {latency['avg']:.2f} |")
+        print(f"| 95th Percentile (ms) | {latency['p95']:.2f} |")
+        print(f"| 99th Percentile (ms) | {latency['p99']:.2f} |")
+        print(f"| Throughput (ops/sec) | {results['throughput']:.2f} |")
+        print(f"| Concurrency Success Rate (%) | {results['concurrency']:.2f} |")

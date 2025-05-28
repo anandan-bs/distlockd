@@ -10,6 +10,7 @@ import os
 
 from .server import main as server_main
 from .constants import DEFAULT_HOST, DEFAULT_PORT
+from .benchmark import BenchmarkRunner
 
 def parse_args():
     """Parse command line arguments."""
@@ -73,13 +74,6 @@ def main():
             print(f"Fatal error: {e}")
             sys.exit(1)
     elif args.command == 'test':
-        bench_path = os.path.join(os.path.dirname(__file__), '..', 'benchmarks', 'benchmark.py')
-        bench_path = os.path.abspath(bench_path)
-        spec = importlib.util.spec_from_file_location('benchmark', bench_path)
-        bench = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(bench)
-
-        backend = args.backend
         host = args.host or "localhost"
         port = args.port or 6379 if args.backend == 'redis' else 9999
         bench_args = {
@@ -89,9 +83,8 @@ def main():
             'throughput_seconds': args.throughput_seconds,
             'verbose': args.verbose
         }
-        runner = bench.BenchmarkRunner(backend, host, port, **bench_args)
-        results = runner.run_all()
-        bench.print_results(results, backend)
+        runner = BenchmarkRunner(args.backend, host, port, **bench_args)
+        runner.run_all()
         return 0
     else:
         print("No command specified. Use --help for usage.")

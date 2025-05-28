@@ -2,6 +2,7 @@
 Constants used throughout the distlockd package.
 """
 from typing import Final
+import multiprocessing
 
 # Default configuration
 DEFAULT_HOST: Final = "localhost"
@@ -9,8 +10,8 @@ DEFAULT_PORT: Final = 9999
 DEFAULT_TIMEOUT: Final = 5.0
 DEFAULT_RETRY_COUNT: Final = 3
 DEFAULT_RETRY_DELAY: Final = 0.5
-LOCK_TIMEOUT: Final = 10  # seconds
-MAX_CONNECTIONS: Final = 10 # int
+STALE_LOCK_TIMEOUT: Final = 3600  # seconds
+MAX_CONNECTIONS: Final = multiprocessing.cpu_count() * 2 # int
 
 # Protocol constants
 CMD_ACQUIRE = 0x01

@@ -9,6 +9,7 @@ import time
 import struct
 from typing import Optional, Any
 from contextlib import contextmanager
+import socket
 
 from .exceptions import (
     LockAcquisitionTimeout,
@@ -30,7 +31,9 @@ from .constants import (
     MAX_CONNECTIONS,
     DEFAULT_RETRY_COUNT,
     DEFAULT_RETRY_DELAY,
-    DEFAULT_TIMEOUT
+    DEFAULT_TIMEOUT,
+    RESP_FORMAT,
+    RESP_HEADER_SIZE
 )
 
 
@@ -131,10 +134,10 @@ class Client:
                 sock.sendall(cmd)
 
                 # Read response header (3 bytes: status + msg_len)
-                header = sock.recv(3)
-                if len(header) < 3:
+                header = sock.recv(RESP_HEADER_SIZE)
+                if len(header) < RESP_HEADER_SIZE:
                     raise ServerError("Incomplete response header")
-                status, msg_len = struct.unpack('!BH', header)
+                status, msg_len = struct.unpack(RESP_FORMAT, header)
                 # Read message if any
                 message = b''
                 if msg_len > 0:
@@ -233,10 +236,11 @@ class Client:
                 raise LockReleaseError(
                     f"Failed to release lock {name}: {message}"
                 )
+        except (ConnectionError, ServerError,LockReleaseError) as e:
+            raise e
         except Exception as e:
             raise LockReleaseError(
-                f"Error releasing lock {name}",
-                error=e
+                f"Error releasing lock {name}, error: {e}"
             )
 
     @contextmanager
@@ -248,7 +252,4 @@ class Client:
             yield self
         finally:
             if acquired:
-                try:
-                    self.release(name)
-                except Exception as e:
-                    logger.error(f"Error releasing lock in context manager: {e}")
+                self.release(name)
