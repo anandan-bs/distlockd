@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="distlockd",
-    version="v0.1.0",
+    version="1.0.0",
     author="Anandan B S",
     author_email="anandanklnce@gmail.com",
     description="Simple distributed lock daemon over TCP",
@@ -14,7 +14,7 @@ setup(
     url="https://github.com/anandan-bs/distlockd",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
