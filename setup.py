@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="distlockd",
-    version="1.0.0",
+    version="1.0.1",
     author="Anandan B S",
     author_email="anandanklnce@gmail.com",
     description="Simple distributed lock daemon over TCP",
