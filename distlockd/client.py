@@ -36,6 +36,10 @@ from .constants import (
     RESP_HEADER_SIZE
 )
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +51,6 @@ class Client:
     Basic setup:
     ```python
     from distlockd.client import Client
-    import logging
-
-    # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
 
     # Create a client
     client = Client(host='localhost', port=8888)
@@ -107,7 +104,8 @@ class Client:
         retry_count: int = DEFAULT_RETRY_COUNT,
         connect_timeout: float = DEFAULT_RETRY_DELAY,
         operation_timeout: float = DEFAULT_TIMEOUT,
-        pool_size: int = MAX_CONNECTIONS
+        pool_size: int = MAX_CONNECTIONS,
+        verbose: bool = False
     ) -> None:
         self.host = host
         self.port = port
@@ -116,6 +114,8 @@ class Client:
         self.operation_timeout = operation_timeout
         self.client_id = str(uuid.uuid4())
         self._pool = ConnectionPool(host, port, pool_size)
+        if verbose:
+            logger.setLevel(logging.DEBUG)
         logger.debug(f"Initialized client {self.client_id} for {host}:{port}")
 
     def _send_binary(self, cmd_type: int, name: str) -> tuple[int, str]:
@@ -191,7 +191,7 @@ class Client:
                 status, _ = self._send_binary(CMD_ACQUIRE, name)
                 if status == RESP_OK:
                     self.current_lock = name
-                    logger.info(f"Successfully acquired lock: {name}")
+                    logger.debug(f"Successfully acquired lock: {name}")
                     return True
                 elif status == RESP_TIMEOUT:
                     if timeout and (time.time() - start >= timeout):
@@ -230,7 +230,7 @@ class Client:
                 # If this was our current lock, clear it
                 if self.current_lock == name:
                     self.current_lock = None
-                logger.info(f"Successfully released lock: {name}")
+                logger.debug(f"Successfully released lock: {name}")
                 return True
             else:
                 raise LockReleaseError(

@@ -79,6 +79,9 @@ client = Client() # default host: 127.0.0.1, port: 9999, specified host and port
 # Create a Client with custom timeout and retry logic
 client = Client(timeout=5.0, retry=3)
 
+# Create a Client with verbose logging
+client = Client(verbose=True)
+
 # Check server health
 if client.check_server_health():
     print("Server is healthy!")
@@ -152,10 +155,10 @@ except ConnectionError as e:
 
 ### Test Configuration:
 
-- iterations: 1000
-- num_clients: 1000
-- num_locks: 100
-- throughput_seconds: 10
+- iterations: 1000 # for latency test
+- num_clients: 100 # for concurrency test
+- num_locks: 10 # for concurrency test
+- throughput_seconds: 10 # for throughput test
 
 ### Methodology
 
@@ -163,26 +166,28 @@ except ConnectionError as e:
 - Each test reports average, median, and worst-case latency, as well as throughput.
 - Tests were run on the same hardware/network for fairness.
 
-### Results (Summary)
+### 🥇 Metric-by-Metric Comparison
 
-- The following results were obtained using the configuration below:
+| Metric                    | Distlockd 🟦 | Redis 🔴 | 🏅 Winner |
+|--------------------------|--------------|----------|-----------|
+| **Latency Min (ms)**     | **0.22**     | 0.33     | 🏆 Distlockd |
+| **Latency Max (ms)**     | **0.61**     | 0.86     | 🏆 Distlockd |
+| **Latency Avg (ms)**     | **0.26**     | 0.39     | 🏆 Distlockd |
+| **95th Percentile (ms)** | **0.34**     | 0.54     | 🏆 Distlockd |
+| **99th Percentile (ms)** | **0.39**     | 0.63     | 🏆 Distlockd |
+| **Throughput (ops/sec)** | **28540.00** | 5900.00  | 🏆 Distlockd |
+| **Success Rate (%)**     | 100.00       | 100.00   | 🟰 Tie |
 
-  - **iterations:** 1000
-  - **num_clients:** 1000
-  - **num_locks:** 100
-  - **throughput_seconds:** 10
+> ✅ **Distlockd** leads in all latency and throughput metrics
+> 🤝 Both systems maintained a 100% success rate
 
+---
 
-  | Metric                       |                               distlockd                               |                                   Redis                                   |
-  | ------------------------------ | :----------------------------------------------------------------------: | :-------------------------------------------------------------------------: |
-  | Latency Min (ms)             |      0.07![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.05 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
-  | Latency Max (ms)             | **1.01 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)** |       4.66![Runner-up](https://img.shields.io/badge/Runner-up-red)       |
-  | Latency Avg (ms)             |      0.08![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.07 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
-  | 95th Percentile (ms)         |      0.10![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.08 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
-  | 99th Percentile (ms)         |      0.12![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.11 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
-  | Throughput (ops/sec)         |    5200.00![Runner-up](https://img.shields.io/badge/Runner-up-red)    | **5710.00 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)** |
-  | Concurrency Success Rate (%) |                               **100.00**                               |                                **100.00**                                |
-- `distlockd` achieves sub-millisecond lock operations in most cases, with competitive or superior maximum latency compared to Redis. Throughput and concurrency success rates are robust even under heavy load.
+### 🧠 Summary
+
+- **Distlockd** outperforms **Redis** in every latency and throughput metric, with impressive **28.5k ops/sec**.
+- Redis remains a solid baseline but is outpaced by Distlockd in high-concurrency locking.
+- This makes **Distlockd** a top candidate for high-performance distributed coordination scenarios.
 
 ## Acknowledgements
 

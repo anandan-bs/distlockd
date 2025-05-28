@@ -78,7 +78,7 @@ class BenchmarkRunner:
                 raise ConnectionError(f"Failed to connect to Redis server at {self.host}:{self.port}")
             return client
         elif self.backend == 'distlockd':
-            client = DistlockdClient(self.host, self.port)
+            client = DistlockdClient(self.host, self.port, verbose=self.verbose)
             if not client.check_server_health():
                 raise ConnectionError(f"Failed to connect to distlockd server at {self.host}:{self.port}")
             return client
