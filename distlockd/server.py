@@ -6,9 +6,9 @@ import struct
 import sys
 from typing import Dict, Any
 
-from distlockd.protocol import BinaryProtocol
+from .protocol import BinaryProtocol
 
-from distlockd.constants import (
+from .constants import (
     CMD_ACQUIRE,
     CMD_RELEASE,
     CMD_HEALTH,
@@ -16,14 +16,12 @@ from distlockd.constants import (
     RESP_ERROR,
     RESP_TIMEOUT,
     RESP_INVALID,
-    LOCK_TIMEOUT,
-    DEFAULT_PORT,
-    DEFAULT_HOST
+    LOCK_TIMEOUT
 )
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -139,20 +137,22 @@ async def shutdown(signal: signal.Signals, loop: asyncio.AbstractEventLoop) -> N
     await asyncio.gather(*tasks, return_exceptions=True)
     loop.stop()
 
-async def main() -> None:
+async def main(host: str, port: int, verbose: bool = False) -> None:
     """Main server function."""
+    if verbose:
+        logger.setLevel(logging.DEBUG)
     logger.info("Starting distlockd server...")
     try:
         # Create the server
         try:
             server = await asyncio.start_server(
                 handle_client,
-                DEFAULT_HOST,
-                DEFAULT_PORT,
+                host,
+                port,
                 reuse_address=True
             )
         except OSError as e:
-            logger.error(f"Failed to bind to port {DEFAULT_PORT}: {e}")
+            logger.error(f"Failed to bind to port {port}: {e}")
             sys.exit(1)
 
         # Start cleanup task
@@ -177,23 +177,3 @@ async def main() -> None:
                 await cleanup_task
             except asyncio.CancelledError:
                 pass
-
-if __name__ == '__main__':
-    logger.info("Initializing server...")
-    try:
-        # Set up signal handlers for graceful shutdown
-        def handle_signal(signum, frame):
-            logger.info(f"Received signal {signal.Signals(signum).name}")
-            # This will raise a KeyboardInterrupt
-            raise KeyboardInterrupt
-
-        signal.signal(signal.SIGINT, handle_signal)
-        signal.signal(signal.SIGTERM, handle_signal)
-
-        # Run the server
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Server stopped by user")
-    except Exception as e:
-        logger.error(f"Fatal error: {e}", exc_info=True)
-        sys.exit(1)

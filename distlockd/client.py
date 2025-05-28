@@ -1,4 +1,8 @@
-import socket
+"""
+distlockd.client
+
+Client for the distlockd lock server.
+"""
 import uuid
 import logging
 import time
@@ -6,16 +10,16 @@ import struct
 from typing import Optional, Any
 from contextlib import contextmanager
 
-from distlockd.exceptions import (
+from .exceptions import (
     LockAcquisitionTimeout,
     LockReleaseError,
     ServerError,
     ConnectionError
 )
-from distlockd.protocol import BinaryProtocol
-from distlockd.connection_pool import ConnectionPool
+from .protocol import BinaryProtocol
+from .connection_pool import ConnectionPool
 
-from distlockd.constants import (
+from .constants import (
     DEFAULT_HOST,
     DEFAULT_PORT,
     CMD_ACQUIRE,
@@ -39,7 +43,7 @@ class Client:
 
     Basic setup:
     ```python
-    from distlockd import Client
+    from distlockd.client import Client
     import logging
 
     # Configure logging

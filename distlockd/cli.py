@@ -3,10 +3,13 @@ Command-line interface for distlockd server.
 """
 import argparse
 import asyncio
-import logging
-from typing import Optional
+import sys
+import signal
+import importlib.util
+import os
 
-from .server import LockServer
+from .server import main as server_main
+from .constants import DEFAULT_HOST, DEFAULT_PORT
 
 def parse_args():
     """Parse command line arguments."""
@@ -19,14 +22,14 @@ def parse_args():
     server_parser.add_argument(
         '--host',
         type=str,
-        default='0.0.0.0',
-        help='Host to bind the server to (default: 0.0.0.0)'
+        default=DEFAULT_HOST,
+        help='Host to bind the server to (default: {})'.format(DEFAULT_HOST)
     )
     server_parser.add_argument(
         '-p', '--port',
         type=int,
-        default=8888,
-        help='Port to listen on (default: 8888)'
+        default=DEFAULT_PORT,
+        help='Port to listen on (default: {})'.format(DEFAULT_PORT)
     )
     server_parser.add_argument(
         '-v', '--verbose',
@@ -34,28 +37,18 @@ def parse_args():
         help='Enable verbose logging'
     )
 
+    # Benchmark/test command
+    test_parser = subparsers.add_parser('test', help='Run distlockd/redis benchmarks')
+    test_parser.add_argument('backend', choices=['redis', 'distlockd'], help='Which backend to test')
+    test_parser.add_argument('--host', type=str, help='Host to connect to')
+    test_parser.add_argument('--port', type=int, help='Port to connect to')
+    test_parser.add_argument('--iterations', type=int, default=1000, help='Number of iterations for latency test')
+    test_parser.add_argument('--num-clients', type=int, default=100, help='Number of clients for concurrency test')
+    test_parser.add_argument('--num-locks', type=int, default=10, help='Number of locks for concurrency test')
+    test_parser.add_argument('--throughput-seconds', type=int, default=10, help='Seconds for throughput test')
+    test_parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
+
     return parser.parse_args()
-
-async def start_server(host: str, port: int, verbose: bool = False):
-    """Start the distlockd server."""
-    # Configure logging
-    log_level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-
-    server = LockServer(host, port)
-    logging.info(f"Starting distlockd server on {host}:{port}")
-
-    try:
-        await server.start()
-    except asyncio.CancelledError:
-        logging.info("Server shutdown requested")
-    except Exception as e:
-        logging.error(f"Server error: {e}")
-    finally:
-        await server.stop()
 
 def main():
     """Main entry point for the CLI."""
@@ -63,12 +56,43 @@ def main():
 
     if args.command == 'server':
         try:
-            asyncio.run(start_server(args.host, args.port, args.verbose))
+            # Set up signal handlers for graceful shutdown
+            def handle_signal(signum, _):
+                print(f"Received signal {signal.Signals(signum).name}")
+                # This will raise a KeyboardInterrupt
+                raise KeyboardInterrupt
+
+            signal.signal(signal.SIGINT, handle_signal)
+            signal.signal(signal.SIGTERM, handle_signal)
+
+            # Run the server
+            asyncio.run(server_main(args.host, args.port, verbose=args.verbose))
         except KeyboardInterrupt:
-            print("\nServer stopped by user")
+            print("Server stopped by user")
         except Exception as e:
-            print(f"Error: {e}")
-            return 1
+            print(f"Fatal error: {e}")
+            sys.exit(1)
+    elif args.command == 'test':
+        bench_path = os.path.join(os.path.dirname(__file__), '..', 'benchmarks', 'benchmark.py')
+        bench_path = os.path.abspath(bench_path)
+        spec = importlib.util.spec_from_file_location('benchmark', bench_path)
+        bench = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bench)
+
+        backend = args.backend
+        host = args.host or "localhost"
+        port = args.port or 6379 if args.backend == 'redis' else 9999
+        bench_args = {
+            'iterations': args.iterations,
+            'num_clients': args.num_clients,
+            'num_locks': args.num_locks,
+            'throughput_seconds': args.throughput_seconds,
+            'verbose': args.verbose
+        }
+        runner = bench.BenchmarkRunner(backend, host, port, **bench_args)
+        results = runner.run_all()
+        bench.print_results(results, backend)
+        return 0
     else:
         print("No command specified. Use --help for usage.")
         return 1
@@ -76,5 +100,4 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    import sys
     sys.exit(main())

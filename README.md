@@ -43,14 +43,39 @@ pip install distlockd
 ### Starting the Server
 
 ```bash
-# Basic usage (default host: 127.0.0.1, port: 8888)
-python -m distlockd server
+# Basic usage (default host: 127.0.0.1, port: 9999)
+python -m distlockd.cli server
+
+# Or, if installed as a package:
+distlockd server
 
 # With custom host and port
-python -m distlockd server --host 127.0.0.1 --port 9999
+python -m distlockd.cli server --host 127.0.0.1 --port 9999
+# Or
+distlockd server --host 127.0.0.1 --port 9999
 
 # Enable verbose logging
-python -m distlockd server -v
+python -m distlockd.cli server -v
+# Or
+distlockd server -v
+```
+
+### Running the Benchmark
+
+```bash
+python -m distlockd.cli test distlockd|redis
+# Or
+distlockd test distlockd|redis
+
+# With custom host and port
+python -m distlockd.cli test distlockd|redis --host 127.0.0.1 --port 9999
+# Or
+distlockd test distlockd|redis --host 127.0.0.1 --port 9999
+
+# With custom iterations, num_clients, num_locks, and throughput_seconds
+python -m distlockd.cli test distlockd|redis --iterations 1000 --num_clients 1000 --num_locks 100 --throughput_seconds 10
+# Or
+distlockd test distlockd|redis --iterations 1000 --num_clients 1000 --num_locks 100 --throughput_seconds 10
 ```
 
 ### Client Examples
@@ -58,17 +83,10 @@ python -m distlockd server -v
 #### Basic Usage
 
 ```python
-from distlockd import Client
-import logging
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+from distlockd.client import Client
 
 # Create a client
-client = Client() # default host: 127.0.0.1, port: 8888, specified host and port: Client(host="192.xx.xx.xx", port=9999)
+client = Client() # default host: 127.0.0.1, port: 9999, specified host and port: Client(host="192.xx.xx.xx", port=9999)
 
 # Check server health
 if client.check_server_health():
@@ -121,50 +139,63 @@ except ConnectionError as e:
     print(f"Connection error: {e}")
 ```
 
-## Benchmarks
+## Benchmark Comparison Report
 
-Performance tests compare `distlockd` against Redis-based distributed locks under various loads and concurrency levels. The benchmarks measure:
+**Date:** 2025-05-28 11:10:51
 
-- **Lock acquisition/release latency**
-- **Throughput (locks/sec)**
-- **Concurrency handling**
+### System Info:
+
+- Platform: Linux
+- Platform-Release: 4.18.0-553.5.1.el8_10.x86_64
+- Platform-Version: #1 SMP Tue May 21 03:13:04 EDT 2024
+- Machine: x86_64
+- Processor: x86_64
+- CPU Count: 8
+- RAM (GB): 15.39
+- Uname:
+  - system: Linux
+  - release: 4.18.0-553.5.1.el8_10.x86_64
+  - version: #1 SMP Tue May 21 03:13:04 EDT 2024
+  - machine: x86_64
+  - processor: x86_64
+
+### Test Configuration:
+
+- iterations: 1000
+- num_clients: 1000
+- num_locks: 100
+- throughput_seconds: 10
 
 ### Methodology
+
 - Both servers were tested using equivalent client logic and lock contention scenarios.
 - Each test reports average, median, and worst-case latency, as well as throughput.
 - Tests were run on the same hardware/network for fairness.
 
 ### Results (Summary)
-- `distlockd` demonstrates competitive or superior latency compared to Redis for basic distributed locking workloads, with very low overhead.
-- For most use cases, lock acquisition and release are sub-millisecond.
-- Throughput scales well with moderate concurrency, making it suitable for most coordination tasks.
 
-See the full interactive benchmark report by opening the following file in your web browser after running the benchmarks:
+- The following results were obtained using the configuration below:
 
-`benchmarks/benchmark_report.html`
+  - **iterations:** 1000
+  - **num_clients:** 1000
+  - **num_locks:** 100
+  - **throughput_seconds:** 10
 
-> **Note:**
-> GitHub does not render local HTML files. To view the interactive report, clone the repository and open the file above in your browser. Here is the report:
 
-### 📈 Benchmark Highlights
+  | Metric                       |                               distlockd                               |                                   Redis                                   |
+  | ------------------------------ | :----------------------------------------------------------------------: | :-------------------------------------------------------------------------: |
+  | Latency Min (ms)             |      0.07![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.05 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
+  | Latency Max (ms)             | **1.01 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)** |       4.66![Runner-up](https://img.shields.io/badge/Runner-up-red)       |
+  | Latency Avg (ms)             |      0.08![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.07 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
+  | 95th Percentile (ms)         |      0.10![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.08 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
+  | 99th Percentile (ms)         |      0.12![Runner-up](https://img.shields.io/badge/Runner-up-red)      |  **0.11 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)**  |
+  | Throughput (ops/sec)         |    5200.00![Runner-up](https://img.shields.io/badge/Runner-up-red)    | **5710.00 🏆 ![Winner](https://img.shields.io/badge/Winner-brightgreen)** |
+  | Concurrency Success Rate (%) |                               **100.00**                               |                                **100.00**                                |
+- `distlockd` achieves sub-millisecond lock operations in most cases, with competitive or superior maximum latency compared to Redis. Throughput and concurrency success rates are robust even under heavy load.
 
-| Test Type      | Metric                 | Result         |
-|----------------|------------------------|---------------|
-| **Latency**    | Minimum                | **0.00 ms**   |
-|                | Maximum                | **6.00 ms**   |
-|                | Average                | **0.41 ms**   |
-|                | 95th Percentile        | **1.01 ms**   |
-|                | 99th Percentile        | **1.14 ms**   |
-| **Throughput** | Average Ops/sec        | **971**       |
-| **Concurrency**| Clients                | **100**       |
-|                | Locks                  | **10**        |
-|                | Success Rate           | **100%**      |
+## Acknowledgements
 
-> **Summary:**
-> - Lock operations are consistently fast, with average latency well below 1 ms.
-> - The server handles nearly 1,000 lock/unlock operations per second.
-> - In a high-concurrency scenario (100 clients, 10 locks), all operations succeeded.
-
+Thanks to [Windsurf](https://windsurf.ai/) for providing the benchmarking automation and comparison summary in this project.
 
 ## License
 

@@ -3,7 +3,8 @@ Protocol handlers for distlockd server commands.
 """
 import logging
 import struct
-from distlockd.constants import CMD_FORMAT, RESP_FORMAT, CMD_HEADER_SIZE, RESP_HEADER_SIZE
+
+from .constants import CMD_FORMAT, RESP_FORMAT, CMD_HEADER_SIZE, RESP_HEADER_SIZE
 
 logger = logging.getLogger(__name__)
 
