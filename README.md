@@ -22,6 +22,7 @@
 - No external dependencies (no Redis, no databases)
 - Structured error handling and logging
 - Lightweight and easy to deploy
+- Connection pool for efficient connection management
 
 ## Installation
 
@@ -44,37 +45,24 @@ pip install distlockd
 
 ```bash
 # Basic usage (default host: 127.0.0.1, port: 9999)
-python -m distlockd.cli server
-
-# Or, if installed as a package:
 distlockd server
 
 # With custom host and port
-python -m distlockd.cli server --host 127.0.0.1 --port 9999
-# Or
 distlockd server --host 127.0.0.1 --port 9999
 
 # Enable verbose logging
-python -m distlockd.cli server -v
-# Or
 distlockd server -v
 ```
 
 ### Running the Benchmark
 
 ```bash
-python -m distlockd.cli test distlockd|redis
-# Or
 distlockd test distlockd|redis
 
 # With custom host and port
-python -m distlockd.cli test distlockd|redis --host 127.0.0.1 --port 9999
-# Or
 distlockd test distlockd|redis --host 127.0.0.1 --port 9999
 
 # With custom iterations, num_clients, num_locks, and throughput_seconds
-python -m distlockd.cli test distlockd|redis --iterations 1000 --num_clients 1000 --num_locks 100 --throughput_seconds 10
-# Or
 distlockd test distlockd|redis --iterations 1000 --num_clients 1000 --num_locks 100 --throughput_seconds 10
 ```
 
@@ -85,8 +73,11 @@ distlockd test distlockd|redis --iterations 1000 --num_clients 1000 --num_locks 
 ```python
 from distlockd.client import Client
 
-# Create a client
+# Create a Basic client
 client = Client() # default host: 127.0.0.1, port: 9999, specified host and port: Client(host="192.xx.xx.xx", port=9999)
+
+# Create a Client with custom timeout and retry logic
+client = Client(timeout=5.0, retry=3)
 
 # Check server health
 if client.check_server_health():
