@@ -1,12 +1,20 @@
 """
 Command-line interface for distlockd server.
+
+This module provides the command-line interface for running and managing the distlockd server.
+It handles server startup, configuration, and graceful shutdown via signal handling.
+
+Requirements:
+    Python >= 3.6
+
+Example:
+    To start the server:
+        $ distlockd server --host localhost --port 9001
 """
 import argparse
 import asyncio
 import sys
 import signal
-import importlib.util
-import os
 
 from .server import main as server_main
 from .constants import DEFAULT_HOST, DEFAULT_PORT
@@ -57,6 +65,8 @@ def main():
 
     if args.command == 'server':
         try:
+            print(f"distlockd version: {__import__('distlockd').__version__}")
+
             # Set up signal handlers for graceful shutdown
             def handle_signal(signum, _):
                 print(f"Received signal {signal.Signals(signum).name}")

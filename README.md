@@ -2,6 +2,31 @@
 
 `distlockd` is a lightweight, zero-dependency distributed lock server implemented in Python. It enables multiple clients to coordinate access to shared resources using named locks over a simple TCP protocol. Built for simplicity, stability, and ease of integration, distlockd is ideal for teams who need distributed locking without the operational overhead of Redis or other heavyweight systems.
 
+## Requirements
+
+- Python >= 3.6
+
+## Installation
+
+```bash
+pip install distlockd
+```
+
+## Quick Start
+
+```bash
+# Start the server
+distlockd server --host localhost --port 9001
+
+# In your Python code
+from distlockd.client import LockClient
+
+client = LockClient('localhost', 9001)
+with client.lock('my-resource'):
+    # Your critical section here
+    pass
+```
+
 ## Architecture & Protocol
 
 - **Server**: Asyncio-based TCP server, in-memory lock management, auto-timeout for stale locks (default: 10s), minimal resource usage.
@@ -50,7 +75,7 @@ distlockd server
 # With custom host and port
 distlockd server --host 127.0.0.1 --port 9999
 
-# Enable verbose logging
+# Enable verbose logging (Note: may impact performance in high-throughput scenarios)
 distlockd server -v
 ```
 

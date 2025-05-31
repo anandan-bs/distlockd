@@ -3,6 +3,7 @@ Protocol handlers for distlockd server commands.
 """
 import logging
 import struct
+from typing import Tuple
 
 from .constants import CMD_FORMAT, RESP_FORMAT, CMD_HEADER_SIZE, RESP_HEADER_SIZE
 
@@ -26,7 +27,7 @@ class BinaryProtocol:
         return header + name_bytes + client_id_bytes
 
     @staticmethod
-    def unpack_command(data: bytes) -> tuple[int, str, str]:
+    def unpack_command(data: bytes) -> Tuple[int, str, str]:
         """Unpack a binary command."""
         cmd_type, name_len, client_id_len = struct.unpack(CMD_FORMAT, data[:CMD_HEADER_SIZE])
         name = data[CMD_HEADER_SIZE:CMD_HEADER_SIZE+name_len].decode('utf-8')
@@ -43,7 +44,7 @@ class BinaryProtocol:
         return header + message_bytes
 
     @staticmethod
-    def unpack_response(data: bytes) -> tuple[int, str]:
+    def unpack_response(data: bytes) -> Tuple[int, str]:
         """Unpack a binary response."""
         status, msg_len = struct.unpack(RESP_FORMAT, data[:RESP_HEADER_SIZE])
         message = data[RESP_HEADER_SIZE:RESP_HEADER_SIZE+msg_len].decode('utf-8') if msg_len > 0 else ''
